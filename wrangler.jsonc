@@ -1,0 +1,16 @@
+{
+  "name": "todo-worker",
+	"main": "index.js",
+	"compatibility_date": "2025-11-11",
+	"observability": {
+		"enabled": true
+	},
+
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "sample-ecomm",
+			"database_id": "6d4a71e5-d7bb-4e7f-8009-a10c72baa7a4"
+		}
+	]
+}
