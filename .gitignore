@@ -1,3 +1,9 @@
+# Node modules
 node_modules/
+
+# Coverage output
+coverage/
 nyc_output/
+
+# Wrangler (if using Cloudflare Workers)
 wrangler/

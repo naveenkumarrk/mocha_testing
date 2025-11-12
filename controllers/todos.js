@@ -5,7 +5,6 @@ export async function getTodos(request, env) {
     try{
         const todos = await env.DB.prepare('SELECT * FROM todos').all()
         // const responseBody = JSON.stringify(todos);
-
         return new Response(JSON.stringify(todos),{ status:200,headers: { 'Content-Type': 'application/json' } })
     }catch(error){
         return new Response(JSON.stringify({error: "Failed to get todos", details: error.message}),{
