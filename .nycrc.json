@@ -1,20 +1,8 @@
 {
   "all": true,
-  "include": [
-    "controllers/**/*.js",
-    "handlers/**/*.js",
-    "utils/**/*.js"
-  ],
-  "exclude": [
-    "test/**/*.js",
-    "node_modules/**",
-    "coverage/**"
-  ],
-  "reporter": [
-    "html",
-    "text",
-    "lcov"
-  ],
+  "include": ["controllers/**/*.js", "handlers/**/*.js", "utils/**/*.js"],
+  "exclude": ["test/**/*.js", "node_modules/**", "coverage/**"],
+  "reporter": ["html", "text", "lcov"],
   "report-dir": "./coverage",
   "check-coverage": true,
   "lines": 80,
