@@ -2,23 +2,72 @@ name: Unit Test CI
 
 on:
   push:
-    branches: ['**']  
+    branches: [ '**' ]
   pull_request:
-    branches: ['**']  
+    branches: [ '**' ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
+: true
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Optional: debug what’s in the repo
+      - name: List files in repository
+        run: ls -R
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm install
-      
-      - name: Run unit tests
-        run: npm test
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+      # Extract the total line coverage percentage
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          PERCENT=$(grep -oP 'All files\s+\|\s+\K\d+\.\d+(?=\s+\|)' coverage/lcov.info || echo "0")
+          # Fallback to coverage-summary.json if lcov.info doesn't exist
+          [ "$PERCENT" = "0" ] && PERCENT=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
+          echo "coverage_percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "Line coverage: $PERCENT%"
+
+      # Fail the build if coverage < 99%
+      - name: Enforce minimum coverage (99%)
+        run: |
+          npx c8 check-coverage --lines 99 --exclude-after-remap
+
+      # Post coverage comment on Pull Requests only
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            # Coverage Report ⚡
+            **Lines coverage**: **${{ steps.coverage.outputs.coverage_percent }}%**
+
+            Required threshold: **≥ 90%**
+            Enforced minimum in CI: **≥ 99%**
