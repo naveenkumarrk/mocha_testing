@@ -10,8 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
