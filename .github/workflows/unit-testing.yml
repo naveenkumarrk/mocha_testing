@@ -2,8 +2,12 @@ name: Unit Test CI
 on:
   push:
     branches: [ '**' ]
-  pull_request:
-    branches: [ '**' ]
+
+# --- FIX: Add permissions block for the GITHUB_TOKEN ---
+permissions:
+  contents: read # Allows checking out the code
+  pull-requests: write # This grants permission to comment on the PR
+# --------------------------------------------------------
 
 jobs:
   test:
@@ -61,7 +65,5 @@ jobs:
         with:
           message: |
             # Coverage Report ⚡
-            **Lines coverage**: **${{ steps.coverage.outputs.coverage_percent }}%**  
-            Required threshold: **≥ 90%** (for PR comment)  
-            Enforced minimum in CI: **≥ 99%**  
-            ${{ steps.coverage.outputs.coverage_percent >= 99 && '✅ Passed' || '❌ Failed (<99%)' }}
+            **Lines coverage**: **${{ steps.coverage.outputs.coverage_percent }}%** Required threshold: **≥ 90%** (for PR comment) 
+            Enforced minimum in CI: **≥ 99%** ${{ steps.coverage.outputs.coverage_percent >= 99 && '✅ Passed' || '❌ Failed (<99%)' }}
