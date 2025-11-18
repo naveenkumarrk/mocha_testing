@@ -1,0 +1,24 @@
+name: Unit Test CI
+
+on:
+  push:
+    branches: ['**']  # Runs on all branches
+  pull_request:
+    branches: ['**']  # Runs on PRs to all branches
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run unit tests
+        run: npm test
