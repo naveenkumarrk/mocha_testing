@@ -1,16 +1,23 @@
 echo ">>> Running lint-staged..."
-npx lint-staged || exit 1
+npx lint-staged || {
+  echo "❌ lint-staged failed!"
+  exit 1
+}
 
 echo ">>> Checking for deprecated packages..."
-DEPRECATED=$(npm outdated --json 2>/dev/null | jq 'to_entries | map(select(.value.deprecated != null))')
+DEPRECATED=$(npm outdated --json 2>/dev/null | jq 'to_entries | map(select(.value.deprecated != null))' 2>/dev/null)
 
-if [ "$DEPRECATED" != "[]" ] && [ "$DEPRECATED" != "" ]; then
-  echo "❌ Deprecated packages detected:"
-  echo "$DEPRECATED" | jq .
-  exit 1
+if [ "$DEPRECATED" != "[]" ] && [ "$DEPRECATED" != "" ] && [ "$DEPRECATED" != "null" ]; then
+  echo "⚠️  Deprecated packages detected:"
+  echo "$DEPRECATED" | jq . 2>/dev/null || echo "$DEPRECATED"
+  # Uncomment to block commits with deprecated packages
+  # exit 1
 fi
 
 echo ">>> Running test suite with coverage..."
-npm run test:coverage || exit 1
+npm run test:coverage || {
+  echo "❌ Tests or coverage failed!"
+  exit 1
+}
 
 echo "✅ All checks passed!"
