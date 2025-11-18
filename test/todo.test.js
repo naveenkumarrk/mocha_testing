@@ -324,6 +324,18 @@ describe('Todo Handlers', () => {
       expect(data.todos).to.be.an('array').that.is.empty;
     });
 
+    it('should return failed to fetch', async () => {
+      env.DB.prepare().all.rejects(new Error('Database error'));
+
+      const response = await getTodos(request, env);
+      const data = await response.json();
+
+      expect(response.status).to.equal(500);
+      expect(data.error).to.equal('Failed to fetch todos');
+      expect(data.details).to.equal('Database error');
+      expect(data).to.not.have.property('todos');
+    });
+
     it('should return all the todos with correct structure', async () => {
       const mockTodos = {
         results: [
