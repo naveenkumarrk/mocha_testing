@@ -1,6 +1,12 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { createTodo, deleteTodo, updateTodo } from '../handlers/todos.js';
+import {
+  createTodo,
+  deleteTodo,
+  getTodoById,
+  getTodos,
+  updateTodo,
+} from '../handlers/todos.js';
 import * as validation from '../utils/validation.js';
 
 describe('Todo Handlers', () => {
@@ -304,6 +310,70 @@ describe('Todo Handlers', () => {
 
       expect(response.status).to.equal(500);
       expect(data.error).to.equal('Failed to delete todo');
+    });
+  });
+
+  describe('getTodos', () => {
+    it('should return empty array when no todos exist', async () => {
+      env.DB.prepare().all.resolves({ results: [] });
+
+      const response = await getTodos(request, env);
+      const data = await response.json();
+
+      expect(response.status).to.equal(200);
+      expect(data.todos).to.be.an('array').that.is.empty;
+    });
+
+    it('should return all the todos with correct structure', async () => {
+      const mockTodos = {
+        results: [
+          { id: 1, title: 'Test Todo 1', description: 'Test 1', completed: 0 },
+          { id: 2, title: 'Test Todo 2', description: 'Test 2', completed: 1 },
+        ],
+      };
+
+      env.DB.prepare().all.resolves(mockTodos);
+
+      const response = await getTodos(request, env);
+      const data = await response.json();
+
+      expect(response.status).to.equal(200);
+      expect(data.todos).to.be.an('array').with.lengthOf(2);
+
+      data.todos.forEach((todo, index) => {
+        expect(todo).to.have.all.keys(
+          'id',
+          'title',
+          'description',
+          'completed'
+        );
+        expect(todo).to.deep.equal(mockTodos.results[index]);
+      });
+    });
+
+    it('should return the specific todo by id', async () => {
+      const mockTodo = {
+        id: 2,
+        title: 'Test Todo 2',
+        description: 'Test 2',
+        completed: 1,
+      };
+
+      const stmt = {
+        bind: sinon.stub().returnsThis(),
+        first: sinon.stub().resolves(mockTodo),
+      };
+
+      env.DB.prepare.returns(stmt);
+
+      request = { params: { id: '2' } };
+
+      const response = await getTodoById(request, env);
+      const data = await response.json();
+
+      expect(response.status).to.equal(200);
+      expect(data.success).to.be.true;
+      expect(data.todo).to.deep.equal(mockTodo);
     });
   });
 });
