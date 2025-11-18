@@ -1,5 +1,4 @@
 name: Unit Test CI
-
 on:
   push:
     branches: [ '**' ]
@@ -9,14 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # Optional: debug what’s in the repo
-      - name: List files in repository
-        run: ls -R
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -24,18 +18,23 @@ jobs:
           node-version: '18'
 
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          restore-keys: ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci
 
+      # This generates coverage + json-summary + lcov
       - name: Run tests with coverage
-        run: npm run test:coverage
+        run: npx c8 --reporter=lcov --reporter=json-summary --reporter=text npm test
+        continue-on-error: false
+
+      # Now both files definitely exist
+      - name: Generate HTML report (optional but nice)
+        run: npx c8 report --reporter=html
 
       - name: Upload coverage report as artifact
         uses: actions/upload-artifact@v4
@@ -43,29 +42,28 @@ jobs:
           name: coverage-report
           path: coverage/
 
-      # Extract the total line coverage percentage
       - name: Extract coverage percentage
         id: coverage
         run: |
-          PERCENT=$(grep -oP 'All files\s+\|\s+\K\d+\.\d+(?=\s+\|)' coverage/lcov.info || echo "0")
-          # Fallback to coverage-summary.json if lcov.info doesn't exist
-          [ "$PERCENT" = "0" ] && PERCENT=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct")
-          echo "coverage_percent=$PERCENT" >> $GITHUB_OUTPUT
+          # Primary: from json-summary (most reliable)
+          PERCENT=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct" 2>/dev/null || echo "0")
+          # Fallback to parsing lcov.info
+          if [ "$PERCENT" = "0" ] || [ -z "$PERCENT" ]; then
+            PERCENT=$(grep -h '^LF' coverage/lcov.info | awk '{s+=$1} END {print 100*s/NR}' || echo "0")
+          fi
+          echo "coverage_percent=$(printf "%.2f" "$PERCENT")" >> $GITHUB_OUTPUT
           echo "Line coverage: $PERCENT%"
 
-      # Fail the build if coverage < 99%
-      - name: Enforce minimum coverage (99%)
-        run: |
-          npx c8 check-coverage --lines 99 --exclude-after-remap
+      - name: Check coverage threshold (fails build if <99%)
+        run: npx c8 check-coverage --lines 99 --exclude-after-remap
 
-      # Post coverage comment on Pull Requests only
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           message: |
             # Coverage Report ⚡
-            **Lines coverage**: **${{ steps.coverage.outputs.coverage_percent }}%**
-
-            Required threshold: **≥ 90%**
-            Enforced minimum in CI: **≥ 99%**
+            **Lines coverage**: **${{ steps.coverage.outputs.coverage_percent }}%**  
+            Required threshold: **≥ 90%** (for PR comment)  
+            Enforced minimum in CI: **≥ 99%**  
+            ${{ steps.coverage.outputs.coverage_percent >= 99 && '✅ Passed' || '❌ Failed (<99%)' }}
