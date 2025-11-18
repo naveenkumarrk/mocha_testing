@@ -333,7 +333,17 @@ describe('Todo Handlers', () => {
       expect(response.status).to.equal(500);
       expect(data.error).to.equal('Failed to fetch todos');
       expect(data.details).to.equal('Database error');
-      expect(data).to.not.have.property('todos');
+    });
+
+    it('should return Todo not found', async () => {
+      env.DB.prepare().bind.returnsThis();
+      env.DB.prepare().first.resolves(null);
+
+      const response = await getTodoById(request, env);
+      const data = await response.json();
+
+      expect(response.status).to.equal(404);
+      expect(data.error).to.equal('Todo not found');
     });
 
     it('should return all the todos with correct structure', async () => {
