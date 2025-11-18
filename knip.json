@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["index.js", "handlers/**/*.js", "utils/**/*.js"],
+  "project": ["**/*.js"],
+  "ignore": ["coverage/**", ".nyc_output/**", "node_modules/**", "./husky/**"],
+  "ignoreDependencies": [],
+  "ignoreExportsUsedInFile": true,
+  "eslint": true,
+  "mocha": {
+    "entry": ["test/**/*.test.js"]
+  },
+  "ignoreBinaries": ["80", "report"]
+}
