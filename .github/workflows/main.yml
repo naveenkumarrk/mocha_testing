@@ -21,8 +21,8 @@ jobs:
       coverage_percent: ${{ steps.coverage.outputs.coverage_percent }}
     
     steps:
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
