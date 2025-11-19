@@ -12,7 +12,7 @@ on:
 
 jobs:
   test:
-    runs-on: firmly-rknaveen-m4air
+    runs-on: macOS
     permissions:
       contents: read
       pull-requests: write
