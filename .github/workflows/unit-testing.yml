@@ -1,24 +1,71 @@
 name: Unit Test CI
-
 on:
-  push:
-    branches: ['**']  # Runs on all branches
   pull_request:
-    branches: ['**']  # Runs on PRs to all branches
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm install
-      
-      - name: Run unit tests
-        run: npm test
+        run: npm ci
+
+      - name: Run tests with c8 coverage
+        run: npx c8 --reporter=lcov --reporter=json-summary --reporter=text npm test
+
+      - name: Generate HTML report
+        run: npx c8 report --reporter=html
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          PERCENT=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct" || echo "0")
+          echo "coverage_percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "Coverage: $PERCENT%"
+
+      # PR comment
+      - name: Comment coverage on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            # Coverage Report ⚡
+            **Lines Coverage:** **${{ steps.coverage.outputs.coverage_percent }}%**
+            **Required:** ≥ 99%
+
+            ${{ steps.coverage.outputs.coverage_percent >= 99 && '✅ Passed' || '❌ Failed' }}
+
+      # ❌ FAIL the CI if coverage < 99%
+      - name: Fail if below threshold
+        run: |
+          COV=${{ steps.coverage.outputs.coverage_percent }}
+          if (( $(echo "$COV < 99" | bc -l) )); then
+            echo "❌ Coverage $COV% is below 99%"
+            exit 1
+          else
+            echo "✅ Coverage OK"
+          fi
