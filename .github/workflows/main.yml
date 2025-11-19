@@ -58,23 +58,7 @@ jobs:
       - name: Extract coverage percentage
         id: coverage
         run: |
-          # Extract coverage percentage from coverage-summary.json
-          if [ ! -f coverage/coverage-summary.json ]; then
-            echo "❌ coverage-summary.json not found!"
-            echo "coverage_percent=0" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          # Extract line coverage percentage using jq
-          PERCENT=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
-          
-          # Validate the percentage is a number
-          if ! [[ "$PERCENT" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-            echo "❌ Invalid coverage percentage: $PERCENT"
-            echo "coverage_percent=0" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
+          PERCENT=$(node -p "require('./coverage/coverage-summary.json').total.lines.pct" || echo "0")
           echo "coverage_percent=$PERCENT" >> $GITHUB_OUTPUT
           echo "📊 Coverage: $PERCENT%"
 
@@ -95,7 +79,7 @@ jobs:
           message: |
             ## 📊 Coverage Report
             
-            **Lines Coverage:** `${{ steps.coverage.outputs.coverage_percent }}%`
+            **Lines Coverage:** **${{ steps.coverage.outputs.coverage_percent }}%**
             
             **Required:** ≥ 99%
             
@@ -176,4 +160,4 @@ jobs:
             
             ${{ needs.test.outputs.coverage_percent >= 99 && '✅ **GATE PASSED** - Merge allowed' || '❌ **GATE BLOCKED** - Merge not allowed' }}
             
-            Coverage: `${{ needs.test.outputs.coverage_percent }}%` (Required: ≥ 99%)
+            Coverage: **${{ needs.test.outputs.coverage_percent }}%** (Required: ≥ 99%)
