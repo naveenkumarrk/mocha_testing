@@ -72,6 +72,11 @@ jobs:
             coverage/lcov.info
           retention-days: 30
 
+      - name: Write coverage to local file
+        run: |
+              echo "Coverage: ${{ steps.coverage.outputs.coverage_percent }}%" > coverage_output.txt
+              echo "Written to runner machine: $(pwd)/coverage_output.txt"
+
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
