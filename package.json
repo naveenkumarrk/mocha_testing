@@ -9,7 +9,7 @@
     "format": "prettier --write \"**/*.{js,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,css,md}\"",
     "test": "mocha 'test/**/*.test.js'",
-    "test:coverage": "npm run lint && npm run format:check && c8 --reporter=lcov --reporter=text npm test",
+    "test:coverage": "npm run lint && npm run format:check && c8 --reporter=lcov --reporter=text --reporter=json-summary npm test",
     "test:coverage:html": "npm run lint && npm run format:check && c8 --reporter=html --reporter=text npm test",
     "pretest": "npm run lint && npm run format:check",
     "prepare": "husky"
