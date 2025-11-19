@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     
     outputs:
       coverage_percent: ${{ steps.coverage.outputs.coverage_percent }}
@@ -100,6 +101,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: always()
+    permissions:
+      contents: read
+      pull-requests: write
     
     steps:
       - name: Check coverage threshold
