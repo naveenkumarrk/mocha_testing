@@ -11,6 +11,10 @@ const router = Router();
 
 router.get('/health', () => new Response('Todo Worker is running!'));
 
+router.get(
+  '/random',
+  () => new Response('random number is: ', Math.random().toString())
+);
 // Todos routes
 router.get('/api/todos', getTodos);
 router.get('/api/todos/:id', getTodoById);
