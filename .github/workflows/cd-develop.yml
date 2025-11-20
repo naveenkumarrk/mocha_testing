@@ -7,6 +7,7 @@ on:
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
+    environment: staging # 🔥 CRITICAL FIX
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,41 +16,66 @@ jobs:
       - run: npm ci
 
       - name: Deploy to Staging Worker
-        run: npx wrangler deploy --env staging
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --env staging
 
   integration-tests:
     needs: deploy-staging
     runs-on: ubuntu-latest
+    environment: staging
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
       - name: Run Integration Tests
-        run: npm run test:integration
         env:
-          STAGING_URL : ${{secrets.STAGING_URL}}
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+        run: npm run test:integration
 
   auto-merge-develop-main:
     needs: integration-tests
     if: success()
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Configure Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
       - name: Merge develop → main automatically
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-
           git fetch origin main
           git checkout main
           git merge origin/develop --no-ff -m "Auto-merge develop → main after successful staging tests"
           git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   rollback-staging:
     needs: integration-tests
     if: failure()
     runs-on: ubuntu-latest
+    environment: staging # 🔥 REQUIRED FOR TOKEN
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
       - name: Rollback Staging Deployment
-        run: ./scripts/rollback-staging.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler rollback --env staging
