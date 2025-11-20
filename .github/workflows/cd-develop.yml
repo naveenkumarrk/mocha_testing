@@ -5,10 +5,9 @@ on:
     branches: [develop]
 
 jobs:
-
   deploy-staging:
     runs-on: ubuntu-latest
-    environment: staging   # 🔥 CRITICAL FIX
+    environment: staging # 🔥 CRITICAL FIX
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,14 +40,23 @@ jobs:
     needs: integration-tests
     if: success()
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Configure Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
       - name: Merge develop → main automatically
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
           git fetch origin main
           git checkout main
           git merge origin/develop --no-ff -m "Auto-merge develop → main after successful staging tests"
@@ -58,7 +66,7 @@ jobs:
     needs: integration-tests
     if: failure()
     runs-on: ubuntu-latest
-    environment: staging   # 🔥 REQUIRED FOR TOKEN
+    environment: staging # 🔥 REQUIRED FOR TOKEN
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
