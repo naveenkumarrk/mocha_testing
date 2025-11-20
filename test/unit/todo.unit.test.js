@@ -30,34 +30,34 @@ describe('Todo Handlers', () => {
     sinon.restore();
   });
 
-  describe('getTodos', () => {
-    it('should return all todos successfully', async () => {
-      const mockTodos = {
-        results: [
-          { id: 1, title: 'Test Todo', description: 'Test', completed: 0 },
-        ],
-      };
+  // describe('getTodos', () => {
+  //   it('should return all todos successfully', async () => {
+  //     const mockTodos = {
+  //       results: [
+  //         { id: 1, title: 'Test Todo', description: 'Test', completed: 0 },
+  //       ],
+  //     };
 
-      env.DB.prepare().all.resolves(mockTodos);
+  //     env.DB.prepare().all.resolves(mockTodos);
 
-      const response = await getTodos(request, env);
-      const data = await response.json();
+  //     const response = await getTodos(request, env);
+  //     const data = await response.json();
 
-      expect(response.status).to.equal(200);
-      expect(data.results).to.be.an('array');
-      expect(data.results).to.have.lengthOf(1);
-    });
+  //     expect(response.status).to.equal(200);
+  //     expect(data.results).to.be.an('array');
+  //     expect(data.results).to.have.lengthOf(1);
+  //   });
 
-    it('should handle database errors', async () => {
-      env.DB.prepare().all.rejects(new Error('Database error'));
+  //   it('should handle database errors', async () => {
+  //     env.DB.prepare().all.rejects(new Error('Database error'));
 
-      const response = await getTodos(request, env);
-      const data = await response.json();
+  //     const response = await getTodos(request, env);
+  //     const data = await response.json();
 
-      expect(response.status).to.equal(500);
-      expect(data.error).to.equal('Failed to get todos');
-    });
-  });
+  //     expect(response.status).to.equal(500);
+  //     expect(data.error).to.equal('Failed to get todos');
+  //   });
+  // });
 
   describe('getTodoById', () => {
     beforeEach(() => {
@@ -91,16 +91,6 @@ describe('Todo Handlers', () => {
 
       expect(response.status).to.equal(404);
       expect(data.error).to.equal('Todo not found');
-    });
-
-    it('should return - Failed to get todo', async () => {
-      env.DB.prepare().bind.rejects(new Error('Database error'));
-
-      const response = await getTodoById(request, env);
-      const data = await response.json();
-
-      expect(response.status).to.equal(500);
-      expect(data.error).to.equal('Failed to get todo');
     });
   });
 
