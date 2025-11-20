@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-router.get('/', () => new Response('Todo Worker is running!'));
+router.get('/health', () => new Response('Todo Worker is running!'));
 
 // Todos routes
 router.get('/api/todos', getTodos);

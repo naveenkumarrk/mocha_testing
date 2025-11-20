@@ -1,16 +1,30 @@
 {
   "name": "todo-worker",
-	"main": "index.js",
-	"compatibility_date": "2025-11-11",
-	"observability": {
-		"enabled": true
-	},
+  "main": "index.js",
+  "account_id": "dc28a24ac6bab5a362145a368e9fa3b2",
+  "compatibility_date": "2025-11-11",
 
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "sample-ecomm",
-			"database_id": "6d4a71e5-d7bb-4e7f-8009-a10c72baa7a4"
-		}
-	]
+  "observability": { "enabled": true },
+
+  // Production DB (default env)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "todos-db",
+      "database_id": "fe891019-8810-45f3-b166-6f7808be168f"
+    }
+  ],
+
+  "env": {
+    "staging": {
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "todos-db-staging",
+          "database_id": "c0f8b6af-0931-467e-81ac-71013ac8120e"
+        }
+      ]
+    }
+  }
 }
