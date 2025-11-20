@@ -1,0 +1,54 @@
+name: View Deployment History
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  show-history:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - run: npm ci
+      
+      - name: Get Deployment History
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "📋 Fetching deployment history for ${{ inputs.environment }}..."
+          npx wrangler deployments list --env ${{ inputs.environment }}
+      
+      - name: Get Git Tags
+        run: |
+          echo ""
+          echo "📌 Recent stable release tags:"
+          git tag -l "prod-stable-*" --sort=-creatordate | head -n 10
+      
+      - name: Show Current Deployment
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          PROD_URL: ${{ secrets.PROD_URL }}
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            TEST_URL="${PROD_URL}"
+          else
+            TEST_URL="${STAGING_URL}"
+          fi
+          
+          echo ""
+          echo "🔍 Current deployment info:"
+          curl -s "${TEST_URL}/health" || echo "Health check failed"
