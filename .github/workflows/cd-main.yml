@@ -4,9 +4,48 @@ on:
   push:
     branches: [main]
 
+  # 🔥 Manual trigger for rollback OR manual deployment
+  workflow_dispatch:
+    inputs:
+      rollback_version:
+        description: "Set a version ID to rollback production (leave empty if not rolling back)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
 
+  # 🔥 If manual rollback ID provided → run rollback job ONLY
+  manual-rollback:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_version != '' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      - name: Manual Rollback Production Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "Rolling back production to version: ${{ github.event.inputs.rollback_version }}"
+          npx wrangler rollback --env production --to-version ${{ github.event.inputs.rollback_version }}
+
+    # Stop the rest of the pipeline when rollback-only mode runs
+    outputs:
+      rollback_done: "true"
+
+  # Continue normal deployment IF manual rollback NOT triggered
   create-main-pr:
+    needs: manual-rollback
+    if: ${{ needs.manual-rollback.outputs.rollback_done != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +62,7 @@ jobs:
 
   ci-tests:
     needs: create-main-pr
+    if: ${{ needs.manual-rollback.outputs.rollback_done != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +76,7 @@ jobs:
     needs: ci-tests
     if: success()
     runs-on: ubuntu-latest
-    environment: production   # 🔥 CRITICAL FIX
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -80,16 +120,17 @@ jobs:
     needs: smoke-tests
     if: failure()
     runs-on: ubuntu-latest
-    environment: production  # 🔥 REQUIRED
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
-
-      - name: Rollback Production Worker
+      - name: Automatic Rollback Production Worker (CI failure)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler rollback --env production
+        run: |
+          echo "Auto rollback triggered due to failing smoke tests"
+          npx wrangler rollback --env production
