@@ -1,0 +1,55 @@
+name: CD Develop (Staging Deploy)
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      - name: Deploy to Staging Worker
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  integration-tests:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Integration Tests
+        run: npm run test:integration
+        env:
+          STAGING_URL : ${{secrets.STAGING_URL}}
+
+  auto-merge-develop-main:
+    needs: integration-tests
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge develop → main automatically
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+          git fetch origin main
+          git checkout main
+          git merge origin/develop --no-ff -m "Auto-merge develop → main after successful staging tests"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  rollback-staging:
+    needs: integration-tests
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback Staging Deployment
+        run: ./scripts/rollback-staging.sh

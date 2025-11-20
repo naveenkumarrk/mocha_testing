@@ -1,0 +1,27 @@
+name: CI Feature
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm test
+
+  auto-merge:
+    needs: unit-tests
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-merge feature → develop
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
