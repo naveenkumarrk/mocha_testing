@@ -18,6 +18,7 @@
   "env": {
     "staging": {
       "workers_dev": true,
+      "account_id": "dc28a24ac6bab5a362145a368e9fa3b2",
       "d1_databases": [
         {
           "binding": "DB",
