@@ -7,14 +7,14 @@ on:
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
-    environment: staging # 🔥 CRITICAL FIX
+    environment: staging
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
-
+      
       - name: Deploy to Staging Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -31,12 +31,13 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      
       - name: Run Integration Tests
         env:
           STAGING_URL: ${{ secrets.STAGING_URL }}
         run: npm run test:integration
 
-  auto-merge-develop-main:
+  auto-merge-and-deploy:
     needs: integration-tests
     if: success()
     runs-on: ubuntu-latest
@@ -44,46 +45,37 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
-    
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        
-      - name: Install GitHub CLI
+          # Use PAT instead of GITHUB_TOKEN to trigger workflows
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Configure Git
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-        
-      - name: Configure GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh auth setup-git
-        
-      - name: Auto merge develop → main using GitHub API
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge develop into main
         run: |
-          echo "Merging develop into main using GitHub API…"
-          gh api \
-            repos/${{ github.repository }}/merges \
-            -f base=main \
-            -f head=develop \
-            -f commit_message="Auto merge develop → main (post-staging tests)" \
-          && echo "Merge successful"
+          git fetch origin main
+          git checkout main
+          git merge origin/develop --no-ff -m "Auto merge develop → main (post-staging tests)"
+          git push origin main
 
   rollback-staging:
     needs: integration-tests
     if: failure()
     runs-on: ubuntu-latest
-    environment: staging # 🔥 REQUIRED FOR TOKEN
+    environment: staging
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
-
+      
       - name: Rollback Staging Deployment
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
