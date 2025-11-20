@@ -31,7 +31,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           # Deploy and capture output
-          OUTPUT=$(npx wrangler deploy --env production 2>&1)
+          OUTPUT=$(npx wrangler deploy 2>&1)
           echo "$OUTPUT"
           
           # Extract deployment ID
@@ -134,15 +134,15 @@ jobs:
               echo "Attempting rollback to stable deployment: $STABLE_DEPLOYMENT_ID"
               npx wrangler rollback --env production --deployment-id "$STABLE_DEPLOYMENT_ID" || {
                 echo "Specific rollback failed, trying standard rollback"
-                npx wrangler rollback --env production
+                npx wrangler rollback
               }
             else
               echo "No valid deployment ID, using standard rollback"
-              npx wrangler rollback --env production
+              npx wrangler rollback
             fi
           else
             echo "No stable deployment found, using standard rollback (goes back 1 version)"
-            npx wrangler rollback --env production
+            npx wrangler rollback
           fi
       
       - name: Notify Team
