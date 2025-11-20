@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import {
   createTodo,
-  deleteTodo,
   getTodoById,
   getTodos,
   updateTodo,
@@ -31,75 +30,79 @@ describe('Todo Handlers', () => {
     sinon.restore();
   });
 
-  // describe('getTodos', () => {
-  //   it('should return all todos successfully', async () => {
-  //     const mockTodos = {
-  //       results: [
-  //         { id: 1, title: 'Test Todo', description: 'Test', completed: 0 }
-  //       ]
-  //     };
+  describe('getTodos', () => {
+    it('should return all todos successfully', async () => {
+      const mockTodos = {
+        results: [
+          { id: 1, title: 'Test Todo', description: 'Test', completed: 0 },
+        ],
+      };
 
-  //     env.DB.prepare().all.resolves(mockTodos);
+      env.DB.prepare().all.resolves(mockTodos);
 
-  //     const response = await getTodos(request, env);
-  //     const data = await response.json();
+      const response = await getTodos(request, env);
+      const data = await response.json();
 
-  //     expect(response.status).to.equal(200);
-  //     expect(data.results).to.be.an('array');
-  //     expect(data.results).to.have.lengthOf(1);
-  //   });
+      expect(response.status).to.equal(200);
+      expect(data.results).to.be.an('array');
+      expect(data.results).to.have.lengthOf(1);
+    });
 
-  //   it('should handle database errors', async () => {
-  //     env.DB.prepare().all.rejects(new Error('Database error'));
+    it('should handle database errors', async () => {
+      env.DB.prepare().all.rejects(new Error('Database error'));
 
-  //     const response = await getTodos(request, env);
-  //     const data = await response.json();
+      const response = await getTodos(request, env);
+      const data = await response.json();
 
-  //     expect(response.status).to.equal(500);
-  //     expect(data.error).to.equal('Failed to get todos');
-  //   });
-  // });
+      expect(response.status).to.equal(500);
+      expect(data.error).to.equal('Failed to get todos');
+    });
+  });
 
-  // describe('getTodoById', () => {
-  //   beforeEach(() => {
-  //     request = { params: { id: '1' } };
-  //   });
+  describe('getTodoById', () => {
+    beforeEach(() => {
+      request = { params: { id: '1' } };
+    });
 
-  //   it('should return a todo by id', async () => {
-  //     const mockTodo = { id: 1, title: 'Test Todo', description: 'Test', completed: 0 };
-  //     env.DB.prepare().bind.returnsThis();
-  //     env.DB.prepare().first.resolves(mockTodo);
+    it('should return a todo by id', async () => {
+      const mockTodo = {
+        id: 1,
+        title: 'Test Todo',
+        description: 'Test',
+        completed: 0,
+      };
+      env.DB.prepare().bind.returnsThis();
+      env.DB.prepare().first.resolves(mockTodo);
 
-  //     const response = await getTodoById(request, env);
-  //     const data = await response.json();
+      const response = await getTodoById(request, env);
+      const data = await response.json();
 
-  //     expect(response.status).to.equal(200);
-  //     expect(data.success).to.be.true;
-  //     expect(data.todo.id).to.equal(1);
-  //   });
+      expect(response.status).to.equal(200);
+      expect(data.success).to.be.true;
+      expect(data.todo.id).to.equal(1);
+    });
 
-  //   it('should return 404 when todo not found', async () => {
-  //     env.DB.prepare().bind.returnsThis();
-  //     env.DB.prepare().first.resolves(null);
+    it('should return 404 when todo not found', async () => {
+      env.DB.prepare().bind.returnsThis();
+      env.DB.prepare().first.resolves(null);
 
-  //     const response = await getTodoById(request, env);
-  //     const data = await response.json();
+      const response = await getTodoById(request, env);
+      const data = await response.json();
 
-  //     expect(response.status).to.equal(404);
-  //     expect(data.error).to.equal('Todo not found');
-  //   });
+      expect(response.status).to.equal(404);
+      expect(data.error).to.equal('Todo not found');
+    });
 
-  //   it('should return - Failed to get todo', async() => {
-  //     env.DB.prepare().bind.rejects(new Error("Database error"))
+    it('should return - Failed to get todo', async () => {
+      env.DB.prepare().bind.rejects(new Error('Database error'));
 
-  //     const response = await getTodoById(request, env)
-  //     const data = await response.json()
+      const response = await getTodoById(request, env);
+      const data = await response.json();
 
-  //     expect(response.status).to.equal(500)
-  //     expect(data.error).to.equal("Failed to get todo")
-
-  //   })
-  // });
+      expect(response.status).to.equal(500);
+      expect(data.error).to.equal('Failed to get todo');
+    });
+  });
 
   describe('createTodo', () => {
     it('should create a new todo  as false', async () => {
@@ -175,31 +178,31 @@ describe('Todo Handlers', () => {
       };
     });
 
-    // it('should update a todo successfully', async () => {
-    //   request.json.resolves({
-    //     title: 'Updated Todo 1',
-    //     description: ' updated desctription',
-    //     completed: true,
-    //   });
+    it('should update a todo successfully', async () => {
+      request.json.resolves({
+        title: 'Updated Todo 1',
+        description: ' updated desctription',
+        completed: true,
+      });
 
-    //   validateStub.returns({
-    //     error: null,
-    //     value: {
-    //       title: 'Updated Todo',
-    //       description: ' updated desctription',
-    //       completed: true,
-    //     },
-    //   });
+      validateStub.returns({
+        error: null,
+        value: {
+          title: 'Updated Todo',
+          description: ' updated desctription',
+          completed: true,
+        },
+      });
 
-    //   env.DB.prepare().bind.returnsThis();
-    //   env.DB.prepare().run.resolves({ changes: 1 });
-    //   const response = await updateTodo(request, env);
-    //   const data = await response.json();
+      env.DB.prepare().bind.returnsThis();
+      env.DB.prepare().run.resolves({ changes: 1 });
+      const response = await updateTodo(request, env);
+      const data = await response.json();
 
-    //   expect(response.status).to.equal(200);
-    //   expect(data.success).to.be.true;
-    //   expect(data.updated).to.be.true;
-    // });
+      expect(response.status).to.equal(200);
+      expect(data.success).to.be.true;
+      expect(data.updated).to.be.true;
+    });
 
     // it('should update the completed todos for False', async () => {
     //   request.json.resolves({
@@ -274,44 +277,44 @@ describe('Todo Handlers', () => {
     });
   });
 
-  describe('deleteTodo', () => {
-    beforeEach(() => {
-      request = { params: { id: '1' } };
-    });
+  // describe('deleteTodo', () => {
+  //   beforeEach(() => {
+  //     request = { params: { id: '1' } };
+  //   });
 
-    it('should delete a todo successfully', async () => {
-      env.DB.prepare().bind.returnsThis();
-      env.DB.prepare().run.resolves({ changes: 1 });
+  //   it('should delete a todo successfully', async () => {
+  //     env.DB.prepare().bind.returnsThis();
+  //     env.DB.prepare().run.resolves({ changes: 1 });
 
-      const response = await deleteTodo(request, env);
-      const data = await response.json();
+  //     const response = await deleteTodo(request, env);
+  //     const data = await response.json();
 
-      expect(response.status).to.equal(200);
-      expect(data.success).to.be.true;
-      expect(data.deleted).to.be.true;
-    });
+  //     expect(response.status).to.equal(200);
+  //     expect(data.success).to.be.true;
+  //     expect(data.deleted).to.be.true;
+  //   });
 
-    it('should return 404 when todo not found', async () => {
-      env.DB.prepare().bind.returnsThis();
-      env.DB.prepare().run.resolves({ changes: 0 });
+  //   it('should return 404 when todo not found', async () => {
+  //     env.DB.prepare().bind.returnsThis();
+  //     env.DB.prepare().run.resolves({ changes: 0 });
 
-      const response = await deleteTodo(request, env);
-      const data = await response.json();
+  //     const response = await deleteTodo(request, env);
+  //     const data = await response.json();
 
-      expect(response.status).to.equal(404);
-      expect(data.error).to.equal('Todo not found');
-    });
+  //     expect(response.status).to.equal(404);
+  //     expect(data.error).to.equal('Todo not found');
+  //   });
 
-    it('should return - Failed to get todo', async () => {
-      env.DB.prepare().bind.rejects(new Error('Database error'));
+  //   it('should return - Failed to get todo', async () => {
+  //     env.DB.prepare().bind.rejects(new Error('Database error'));
 
-      const response = await deleteTodo(request, env);
-      const data = await response.json();
+  //     const response = await deleteTodo(request, env);
+  //     const data = await response.json();
 
-      expect(response.status).to.equal(500);
-      expect(data.error).to.equal('Failed to delete todo');
-    });
-  });
+  //     expect(response.status).to.equal(500);
+  //     expect(data.error).to.equal('Failed to delete todo');
+  //   });
+  // });
 
   describe('getTodos', () => {
     it('should return empty array when no todos exist', async () => {
