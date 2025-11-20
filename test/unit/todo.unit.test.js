@@ -194,40 +194,40 @@ describe('Todo Handlers', () => {
       expect(data.updated).to.be.true;
     });
 
-    // it('should update the completed todos for False', async () => {
-    //   request.json.resolves({
-    //     completed: false,
-    //   });
+    it('should update the completed todos for False', async () => {
+      request.json.resolves({
+        completed: false,
+      });
 
-    //   validateStub.returns({ error: null, value: { completed: false } });
-    //   env.DB.prepare().bind.returnsThis();
-    //   env.DB.prepare().run.resolves({ changes: 1 });
+      validateStub.returns({ error: null, value: { completed: false } });
+      env.DB.prepare().bind.returnsThis();
+      env.DB.prepare().run.resolves({ changes: 1 });
 
-    //   const response = await updateTodo(request, env);
-    //   const data = await response.json();
+      const response = await updateTodo(request, env);
+      const data = await response.json();
 
-    //   expect(response.status).to.equal(200);
-    //   expect(data.success).to.be.true;
-    //   expect(data.updated).to.be.true;
-    // });
+      expect(response.status).to.equal(200);
+      expect(data.success).to.be.true;
+      expect(data.updated).to.be.true;
+    });
 
-    // it('should return 400 - Validation errors', async () => {
-    //   const request = {
-    //     params: 125,
-    //     json: sinon.stub().resolves({ title: ' ' }),
-    //   };
+    it('should return 400 - Validation errors', async () => {
+      const request = {
+        params: 125,
+        json: sinon.stub().resolves({ title: ' ' }),
+      };
 
-    //   validateStub.returns({
-    //     error: { message: 'Title is requried' },
-    //     value: null,
-    //   });
+      validateStub.returns({
+        error: { message: 'Title is requried' },
+        value: null,
+      });
 
-    //   const response = await updateTodo(request, env);
-    //   const data = await response.json();
+      const response = await updateTodo(request, env);
+      const data = await response.json();
 
-    //   expect(response.status).to.equal(400);
-    //   expect(data.error).to.equal('Validation failed');
-    // });
+      expect(response.status).to.equal(400);
+      expect(data.error).to.equal('Validation failed');
+    });
 
     it('should return 404 when todo not found', async () => {
       request.json.resolves({
